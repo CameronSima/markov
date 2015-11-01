@@ -53,13 +53,15 @@ class Markov(object):
 
 
 def get_book_text(url):
+	count = 0
 	req = requests.get(url)
 	soup = BeautifulSoup(req.text)
 	pars = soup.find.all('p')
 	
-	with open(url + ".txt", 'w') as f:
+	with open(str(count) + ".txt", 'w') as f:
 		for par in pars:
 			f.write(par.string)
+			count += 1
 
 def get_urls():
 	urls = []
@@ -99,9 +101,6 @@ def main():
 		get_book_text(url)
 
 main()
-
-
-
 
 
 
