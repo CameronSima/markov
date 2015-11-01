@@ -98,6 +98,8 @@ def main():
 		time.sleep(5)
 		get_book_text(url)
 
+main()
+
 
 
 

@@ -57,7 +57,7 @@ def get_book_text(url):
 	soup = BeautifulSoup(req.text)
 	pars = soup.find.all('p')
 	
-	with open(url, 'w') as f:
+	with open(url + ".txt", 'w') as f:
 		for par in pars:
 			f.write(par.string)
 
