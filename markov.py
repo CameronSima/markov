@@ -1,0 +1,106 @@
+import random
+import requests
+import time
+from bs4 import BeautifulSoup, SoupStrainer
+
+class Markov(object):
+	
+	def __init__(self, open_file):
+		self.cache = {}
+		self.open_file = open_file
+		self.words = self.file_to_words()
+		self.word_size = len(self.words)
+		self.database()
+		
+	
+	def file_to_words(self):
+		self.open_file.seek(0)
+		data = self.open_file.read()
+		words = data.split()
+		return words
+		
+	
+	def triples(self):
+		""" Generates triples from the given data string. So if our string were
+				"What a lovely day", we'd generate (What, a, lovely) and then
+				(a, lovely, day).
+		"""
+		
+		if len(self.words) < 3:
+			return
+		
+		for i in range(len(self.words) - 2):
+			yield (self.words[i], self.words[i+1], self.words[i+2])
+			
+	def database(self):
+		for w1, w2, w3 in self.triples():
+			key = (w1, w2)
+			if key in self.cache:
+				self.cache[key].append(w3)
+			else:
+				self.cache[key] = [w3]
+				
+	def generate_markov_text(self, size=25):
+		seed = random.randint(0, self.word_size-3)
+		seed_word, next_word = self.words[seed], self.words[seed+1]
+		w1, w2 = seed_word, next_word
+		gen_words = []
+		for i in xrange(size):
+			gen_words.append(w1)
+			w1, w2 = w2, random.choice(self.cache[(w1, w2)])
+		gen_words.append(w2)
+		return ' '.join(gen_words)
+
+
+def get_book_text(url):
+	req = requests.get(url)
+	soup = BeautifulSoup(req.text)
+	pars = soup.find.all('p')
+	
+	with open(url, 'w') as f:
+		for par in pars:
+			f.write(par.string)
+
+def get_urls():
+	urls = []
+	base_url = 'https://www.gutenberg.org'
+	top_100_url = 'https://www.gutenberg.org/browse/scores/top'
+
+	req = requests.get(top_100_url)
+	soup = BeautifulSoup(req.text, parse_only=SoupStrainer('a', href=True))
+	for link in soup.find_all('a')[19:119]:
+		urls.append(base_url + link['href'])
+
+	return urls
+
+def write_file(data, filename):
+	with open(filename, 'w') as f:
+		f.write(data)
+
+def get_final_urls(urls):
+	final_urls = []
+
+	for url in urls:
+		time.sleep(5)
+		req = requests.get(url)
+		soup = BeautifulSoup(req.text, parse_only=SoupStrainer('a', href=True))
+
+		for x in soup:
+			if x.string == 'Read this book online: HTML':
+				final_urls.append('https:' + x['href'])
+
+	return final_urls
+
+
+def main():
+	book_urls = get_final_urls(get_urls())
+	for url in book_urls:
+		time.sleep(5)
+		get_book_text(url)
+
+
+
+
+
+
+
